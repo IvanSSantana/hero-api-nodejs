@@ -16,25 +16,31 @@ const routes = {
     },
 
     '/heroes:POST': async (request, response) => {
-        // Async Iterator
-        for await (const data of request) {
-            const item = JSON.parse(data);
-            const hero = new Hero(item);
+        try {
+            // await Promise.reject('heroes:get'); --> Para forçar excessões
 
-            const { error, valid } = hero.isValid();
+            // Async Iterator
+            for await (const data of request) {
+                const item = JSON.parse(data);
+                const hero = new Hero(item);
 
-            if(!valid) {
-                response.writeHead(400, DEFAULT_HEADER);
-                response.write(JSON.stringify({ error: error.join(',') }));
+                const { error, valid } = hero.isValid();
 
-                return response.end(); 
+                if(!valid) {
+                    response.writeHead(400, DEFAULT_HEADER);
+                    response.write(JSON.stringify({ error: error.join(',') }));
+
+                    return response.end(); 
+                }
+
+                const id = await heroService.create(hero);
+                response.writeHead(201, DEFAULT_HEADER);
+                response.write(JSON.stringify({ sucess: 'User created with sucess!', id}));
+
+                return response.end();
             }
-
-            const id = await heroService.create(hero);
-            response.writeHead(201, DEFAULT_HEADER);
-            response.write(JSON.stringify({ sucess: 'User created with sucess!', id}));
-
-            return response.end();
+        } catch (error) {
+            handleError(response)(error);
         }
     },
 
@@ -42,6 +48,16 @@ const routes = {
         response.end();
     }
 };
+
+const handleError = response => {
+    return error => {
+        console.error('Houve um erro durante a execução da API', error);
+        response.writeHead(500, DEFAULT_HEADER);
+        response.write(JSON.stringify({ error: 'Internal Server Error.' }));
+
+        return response.end();
+    }
+}
 
 const handler = (request, response) => {
     const { url, method } = request;
@@ -52,7 +68,7 @@ const handler = (request, response) => {
     const key = `/${route}:${method}`;
 
     const chosen = routes[key] || routes.default;
-    return chosen(request, response);
+    return chosen(request, response).catch(handleError(response));
 };
 
 http.createServer(handler)
