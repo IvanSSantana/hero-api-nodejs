@@ -10,8 +10,9 @@ class HeroRepository {
     };
 
     async find(itemId) {
-        const db = await this._currentFileContent();
         if(!itemId) return db;
+
+        const db = await this._currentFileContent();
 
         return db.find(({ id }) => itemId === id);
     };
@@ -23,6 +24,16 @@ class HeroRepository {
         await writeFile(this.file, JSON.stringify(db));
 
         return data.id;
+    };
+
+    async delete(itemId) {
+        if(!itemId) throw new Error("O Id deve ser especificado para a deleção.");
+        
+        const db = await this._currentFileContent();
+
+        const updated_db = await db.filter(({ id }) => itemId !== id);
+
+        await writeFile(this.file, JSON.stringify(updated_db));
     }
 }
 

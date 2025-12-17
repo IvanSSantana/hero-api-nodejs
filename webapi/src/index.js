@@ -44,6 +44,23 @@ const routes = {
         }
     },
 
+    '/heroes:DELETE': async (request, response) => {
+        const { id } = request.queryString;
+        const hero = await heroService.find(id);
+
+        if (!hero) {
+            response.write(JSON.stringify({ error: 'Não existe um herói com esse Id.' }));
+
+            return response.end();
+        };
+
+        const updated_db = await heroService.delete(id);
+
+        response.write(JSON.stringify({ results: `O herói ${hero.name} foi excluído com sucesso!` }));
+
+        return response.end();
+    },
+
     default: (request, response) => {
         response.end();
     }

@@ -10,6 +10,10 @@ class HeroService {
     async create(data) {
         return this.heroRepository.create(data);
     };
+
+    async delete(itemId) {
+        return this.heroRepository.delete(itemId);
+    }
 }
 
 module.exports = HeroService;
